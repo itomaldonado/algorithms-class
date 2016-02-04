@@ -1,11 +1,5 @@
-import sys, timeit
+import sys, timeit,argparse
 from functools import partial
-
-
-# Check for arguments
-if len(sys.argv) != 2:
-  print 'Usage: python 3-sum-naive.py <path-to-input-data-file>'
-  exit(1)
 
 # Sophisticated implementation of the 3-sum algorithm, should be O(N^2 lg N)
 # Will use python's list.sort() function
@@ -24,33 +18,39 @@ def sophisticated(filename=None):
         if search_index > -1:
           if int(int_list[i]) < int(int_list[j]) and int(int_list[j]) < int(int_list[search_index]):
             count += 1
-    return count
+    print "3-sum count:",count
 
-# Binary search implementation, returns -1 if item not found in the list
+# Recursive binary search implementation, returns -1 if item not found in the list
 def binary_search(alist, first, last, item):
+  # Get the mid item
   mid = ( (last - first) // 2 ) + first
-  if int(alist[mid]) == int(item):
+  if int(alist[mid]) == int(item): # If the mid item is the one we want, return it.
     return mid
   elif first >= last: # If the current item is not what we want and we reached the end of the list, we return -1
     return -1
-  elif int(alist[mid]) < int(item):
+  elif int(alist[mid]) < int(item): # If the mid item is larger, we search from mid+1 to last 
     return binary_search(alist, mid+1, last, item)
-  elif int(alist[mid]) > int(item): 
+  elif int(alist[mid]) > int(item): # If the mid item is larger, we search from first to mid-1
     return binary_search(alist, first, mid-1, item)
 
-# Run the function defined above and get the best running time
+
 if __name__ == '__main__':
   
-  # We run it once just to get the actual value
-  count = sophisticated(sys.argv[1])
-  print "3-sum count: ", count
+  # Instantiate argument parser
+  parser = argparse.ArgumentParser(description='Find 3-sum count in a list of integers provided via input text file')
+  parser.add_argument('-t', '--time', help='get run time in seconds', action='store_true', default=False)
+  parser.add_argument('file', help='path to the file containing list of integers', default='')
+  
+  # Get/parse arguments
+  args = parser.parse_args()
 
-  # We use timeit to run this 'x' times and get the best time.
-  number_per_iteration = 1
-  total_iteration = 1
-  times = timeit.Timer( partial(sophisticated, sys.argv[1]) ).repeat(number_per_iteration, total_iteration)
-  
-  # Average time taken, divided by the number of repeats (since time is cumulative)
-  time_taken = float(sum(times))/max(len(times),1) / total_iteration
-  
-  print "Average Time taken: ", time_taken
+  # If the '--time' flag was given, we show the runtime of the program
+  if args.time:
+    # We use timeit to run this 'x' times and get the best time.
+    times = timeit.Timer( partial(sophisticated, sys.argv[1]) ).repeat(1, 1)
+    # Average time taken, divided by the number of repeats (since time is cumulative)
+    time_taken = float(sum(times))/max(len(times),1) / 1
+    print "Average Time taken: ", time_taken
+  else:
+    # We run it once just to get the actual value
+    sophisticated(sys.argv[1])
