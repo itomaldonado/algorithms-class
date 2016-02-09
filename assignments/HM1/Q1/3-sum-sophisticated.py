@@ -1,7 +1,7 @@
 import sys, timeit,argparse
 from functools import partial
 
-# Sophisticated implementation of the 3-sum algorithm, should be O(N^2 lg N)
+# Sophisticated implementation of the 3-sum algorithm, should be O(N^2 log N)
 # Will use python's list.sort() function
 def sophisticated(filename=None):
   count = 0
@@ -12,8 +12,8 @@ def sophisticated(filename=None):
     int_list.sort()
 
     # Use binary search to find the 3-sum
-    for i in range(0,len(int_list)-1):
-      for j in range(0,len(int_list)-1):
+    for i in range(len(int_list)-1):
+      for j in range(len(int_list)-1):
         search_index = binary_search(int_list, 0, len(int_list)-1, int( -1 * ( int(int_list[i]) + int(int_list[j]) )))
         if search_index > -1:
           if int(int_list[i]) < int(int_list[j]) and int(int_list[j]) < int(int_list[search_index]):
@@ -47,10 +47,10 @@ if __name__ == '__main__':
   # If the '--time' flag was given, we show the runtime of the program
   if args.time:
     # We use timeit to run this 'x' times and get the best time.
-    times = timeit.Timer( partial(sophisticated, sys.argv[1]) ).repeat(1, 1)
+    times = timeit.Timer( partial(sophisticated, args.file) ).repeat(1, 1)
     # Average time taken, divided by the number of repeats (since time is cumulative)
-    time_taken = float(sum(times))/max(len(times),1) / 1
+    time_taken = float(sum(times))/max(len(times),1.0) / 1.0
     print "Average Time taken: ", time_taken
   else:
     # We run it once just to get the actual value
-    sophisticated(sys.argv[1])
+    sophisticated(args.file)

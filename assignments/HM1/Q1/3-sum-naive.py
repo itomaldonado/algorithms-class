@@ -6,7 +6,7 @@ def naive(filename=None):
   count = 0
   with open(filename) as f:
     int_list = f.readlines()
-    for i in range(0,len(int_list)):
+    for i in range(len(int_list)):
       for j in range (i+1,len(int_list)):
         for k in range(j+1,len(int_list)):
           if (int(int_list[i]) + int(int_list[j]) + int(int_list[k])) == 0:
