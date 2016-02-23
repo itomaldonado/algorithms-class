@@ -4,22 +4,23 @@ from functools import partial
 # Shell sort implementation
 def shell_sort(int_list):
   comps = 0
-  for h in (7 , 3 , 1):
+  for h in (7 , 3 , 1): # for each index we do an h-sort
     int_list, temp = __h_sort(int_list,h)
     comps += temp
   return int_list, comps
 
+# Implementation of H-Sort, similar to insertion sort but we compre/move with a pace of 'h'
 def __h_sort(a, h):
   comps = 0
   for curr_index in xrange(h, len(a), 1):
     swap_index = curr_index
     while (swap_index >= h):
+      comps += 1 # Every loop can be considered a comparison.
       if a[swap_index] < a[swap_index - h]:
         temp = a[swap_index]
         a[swap_index] = a[swap_index - h]
         a[swap_index - h] = temp
         swap_index -= h
-        comps += 1
       else: 
         break
   return a, comps

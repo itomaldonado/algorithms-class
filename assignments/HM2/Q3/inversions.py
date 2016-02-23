@@ -79,6 +79,11 @@ if __name__ == '__main__':
     time_taken = float(sum(times))/max(len(times),1.0) / 1.0
     print "Average Time taken: ", time_taken
   else:
+    invs = 0
     # We run it once just to get the actual value
-    print inversions(int_list)
+    invs = inversions(int_list)
+
+    # Print out the results to out.txt
+    with open('./out.txt', 'wb') as f:
+      f.write("%s\n" % invs)
 

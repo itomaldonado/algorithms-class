@@ -42,11 +42,11 @@ def __merge(a, low, mid, high):
     elif aux[lower_marker] <= aux[upper_marker]: # lower one is less or equal to upper, use that
       a[i] = aux[lower_marker]
       lower_marker += 1
-      comps += 1
+      comps += 1 # since we are actually comparing we increase it
     else: # else, just use the upper one
       a[i] = aux[upper_marker]
       upper_marker += 1
-      comps += 1
+      comps += 1 # since we are actually comparing we increase it
     i += 1
   
   return a, comps
