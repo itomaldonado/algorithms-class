@@ -47,6 +47,10 @@ if __name__ == '__main__':
 
     # Print out the results to out.txt
     with open('./out.txt', 'wb') as f:
-      f.write("%s" % comps)
+      first = True
       for item in int_list:
-        f.write("\n%s" % item)
+        if first:
+          f.write("%s" % item)
+          first = False
+        else:
+          f.write("\n%s" % item)

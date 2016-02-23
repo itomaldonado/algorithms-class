@@ -16,3 +16,4 @@ References:
 http://algs4.cs.princeton.edu/21elementary/
 http://algs4.cs.princeton.edu/25applications/KendallTau.java.html
 http://algs4.cs.princeton.edu/22mergesort/Inversions.java.html
+http://www.cs.wcupa.edu/rkline/ds/shell-comparison.html

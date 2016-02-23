@@ -1,7 +1,7 @@
 import sys, timeit, argparse
 from functools import partial
 
-# Mergesort, should be ~ O(N log N)
+# Mergesort To-Down Approach, should be ~ O(N log N)
 def mergesort(int_list):
   comps = 0
   int_list, comps = __sort(int_list, 0, len(int_list) - 1)
@@ -63,7 +63,7 @@ def __merge(a, low, mid, high):
 if __name__ == '__main__':
   
   # Instantiate argument parser
-  parser = argparse.ArgumentParser(description='Sort a list of integers using mergesort, list is provided via input text file')
+  parser = argparse.ArgumentParser(description='Sort a list of integers using mergesort top-down, list is provided via input text file')
   parser.add_argument('-t', '--time', help='get run time in seconds', action='store_true', default=False)
   parser.add_argument('file', help='path to the file containing list of integers', default='')
   
