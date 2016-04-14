@@ -1,8 +1,14 @@
-import sys, timeit, argparse, time
+import sys, timeit, argparse, time, random
 from functools import partial
 
+# For logging
+LOG_ENABLED = False
 
-def new_node(key=None, val=None, left=None, right=None, N=0):
+# For colors
+RED = True
+BLACK = False
+
+def new_node(key=None, val=None, left=None, right=None, N=0, color=BLACK):
   """
   Create a new node structure
   """
@@ -11,13 +17,14 @@ def new_node(key=None, val=None, left=None, right=None, N=0):
     'val': val,
     'left': left,
     'right': right,
-    'N': N
+    'N': N,
+    'color': color # False == Black, True == Red
   }
   return new_node
 
-class BST:
+class RBT:
   """
-  Class implementing a BST
+  Class implementing a RBT
   A node is a dict of:
   {
     'key' --> sorted by key
@@ -25,24 +32,25 @@ class BST:
     'left' --> left subtree
     'right' --> right subtree
     'N' --> number of nodes in subtree
+    color --> False == Black, True == Red
   }
   """
 
   def __init__(self):
     """
-    Initialize the BST class
+    Initialize the RBT class
     """
     self.root = None
 
   def empty(self):
     """
-    returns true if BST is of size 0
+    returns true if RBT is of size 0
     """
     return self.size() == 0
 
   def size(self):
     """
-    Returns the size of the BST
+    Returns the size of the RBT
     """
     return self.__size(self.root)
 
@@ -76,7 +84,7 @@ class BST:
     If key is the same as node, return node value
     """
     if node == None:
-      return null
+      return None
     elif key < node['key']:
       return self.__get(node['left'], key)
     elif key > node['key']:
@@ -86,7 +94,7 @@ class BST:
 
   def put(self, key, val):
     """
-    Put the key,value in the BST
+    Put the key,value in the RBT
     Raise exception if key is None
     Delete key if value is None
     """
@@ -107,91 +115,31 @@ class BST:
     Finally, update the node's count
     """
     if node == None:
-      return new_node(key=key, val=val, N=1);    
+      return new_node(key=key, val=val, N=1, color=RED)
     elif key < node['key']:
       node['left'] = self.__put(node['left'], key, val)
     elif key > node['key']:
       node['right'] = self.__put(node['right'], key, val)
     else:
         node['val'] == val
+
+    # Perform re-balancing operations
+    if self.__red(node['right']) and not self.__red(node['left']):
+      node = self.__rotate_left(node)
+
+    if self.__red(node['left']) and self.__red(node['left']['left']):
+      node = self.__rotate_right(node)
+
+    if self.__red(node['left']) and self.__red(node['right']):
+      self.__flip_colors(node)
+
     node['N'] = 1 + self.__size(node['left']) + self.__size(node['right'])
-    return node
-
-  def delete_min(self):
-    """
-    Delete the min value 
-    Do nothing if BST is empty
-    """
-    if self.empty():
-      return None
-    else: 
-      self.root = __delete_min(self.root)
-
-  def __delete_min(self, node):
-    """
-    Private implementation of delete min.
-    """
-    if node['left'] == None:
-      return node['right']
-    node['left'] = self.__delete_min(node['left']);
-    node['N'] = self.__size(node['left']) + self.__size(node['right']) + 1
-    return node
-
-  def delete_max(self):
-    """
-    Delete the max value 
-    Do nothing if BST is empty
-    """
-    if self.empty():
-      return None
-    else: 
-      self.root = __delete_max(self.root)
-
-  def __delete_max(self, node):
-    """
-    Private implementation of delete max.
-    """
-    if node['right'] == None:
-      return node['left']
-    node['right'] = self.__delete_max(node['right']);
-    node['N'] = self.__size(node['left']) + self.__size(node['right']) + 1
-    return node
-
-  def delete(self, key):
-    """
-    Delete a key
-    Raise exception if key is None
-    """
-    if key == None:
-      raise Exception("key is None")
-    self.root = self.__delete(self.root, key)
-
-  def __delete(self, node, key):
-    """
-    Private implementation of delete 
-    """
-    if node == None:
-      return None
-    elif key < node['key']:
-      node['left'] = self.__delete(node['left'], key)
-    elif key > node['key']:
-      node['right'] = self.__delete(node['right'], key)
-    else:
-      if node['right'] == None:
-        return node['left']
-      if node['left'] == None:
-        return node['right']
-      temp = node
-      node = self.__min(temp)
-      node['right'] = self.__delete_min(temp['right'])
-      node['left'] = temp['left']
-    node['N'] = self.__size(node['left']) + self.__size(node['right']) + 1
     return node
 
   def min(self):
     """
-    Find the min value in the BST and return the key
-    return 'None' if BST is empty
+    Find the min value in the RBT and return the key
+    return 'None' if RBT is empty
     """
     if self.empty():
       return None
@@ -210,8 +158,8 @@ class BST:
 
   def max(self):
     """
-    Find the max value in the BST and return the key
-    return 'None' if BST is empty
+    Find the max value in the RBT and return the key
+    return 'None' if RBT is empty
     """
     if self.empty():
       return None
@@ -299,7 +247,7 @@ class BST:
   def select(self, pos):
     """
     Select a key in a given position
-    Raise exception if position is less than zero or larger than BST size
+    Raise exception if position is less than zero or larger than RBT size
     """
     if (pos < 0) or (pos >= self.size()):
       raise Exception('Position is out of bounds') 
@@ -343,37 +291,160 @@ class BST:
     else:
       return self.__size(node['left'])
 
+  ### RedBlack Tree Helper Functions
+
+  def red(self, node):
+    return self.__red(node)
+
+  def __red(self, node):
+    """
+    Returns true if node is red
+    """
+    if node is None:
+      return BLACK
+    return node['color'] == RED
+
+  def __rotate_right(self, node):
+    """
+    Making a left-leaning red link move to the right
+    """
+    left = node['left']
+    node['left'] = left['right']
+    left['right'] = node
+    left['color'] = node['color']
+    node['color'] = RED
+    left['N'] = node['N']
+    node['N'] = self.__size(node['left']) + self.__size(node['right']) + 1
+    return left
+
+  def __rotate_left(self, node):
+    """
+    Making a right-leaning red link move to the left
+    """
+    right = node['right']
+    node['right'] = right['left']
+    right['left'] = node
+    right['color'] = node['color']
+    node['color'] = RED
+    right['N'] = node['N']
+    node['N'] = self.__size(node['left']) + self.__size(node['right']) + 1
+    return right
+
+  def __flip_colors(self, node):
+    """
+    Flip the colors of a node and its children
+    """
+    node['color'] = RED
+    node['left']['color'] = BLACK
+    node['right']['color'] = BLACK
+
+  def nodes(self):
+    """
+    Return a list of nodes doing an inorder traversal
+    Should be O(n)
+    """
+    nodes = list()
+    nodes = self.__nodes(nodes, self.root)
+    return nodes
+
+  def __nodes(self, node_list, node):
+    """
+    Private implementation of nodes
+    Returns list of nodes starting at the 'node' parameter
+    Adds them to the 'node_list'
+    Does inorder traversal
+    """
+    if node is None:
+      return node_list
+    node_list = self.__nodes(node_list, node['left'])
+    node_list.append(node)
+    node_list = self.__nodes(node_list, node['right'])
+    return node_list
+
+  def get_red_links(self):
+    """
+    Return number of red links doing an inorder traversal
+    Should be O(n)
+    """
+    links = 0
+    links += self.__red_links(self.root)
+    return links
+
+  def __red_links(self, node):
+    """
+    Private implementation of get_red_links
+    Returns number of red links
+    Does inorder traversal
+    """
+    links = 0
+    if node is None:
+      return 0
+    elif self.__red(node):
+      links += 1
+    links += self.__red_links(node['left'])
+    links += self.__red_links(node['right'])
+    return links
+
+# Logging Helper function
+def log(txt):
+  if LOG_ENABLED:
+    print(txt)
+
 if __name__ == '__main__':
   
   # Instantiate argument parser
-  parser = argparse.ArgumentParser(description='Binary Search Tree implementation, list is provided via input text file')
-  parser.add_argument('-i', '--item', help='number that will be used to rank and select', default=7)
-  parser.add_argument('file', help='path to the file containing list of integers', default='')
+  parser = argparse.ArgumentParser(description='Red-Black Tree implementation, list is randomly generated')
+  parser.add_argument('-t', '--trials', help='number of trials', default=100)
+  parser.add_argument('-l', '--log', help='Print trial stats', action='store_true', default=False)
+  #parser.add_argument('file', help='path to the file containing list of integers', default='')
   
   # Get/parse arguments
   args = parser.parse_args()
+  LOG_ENABLED = args.log
+  trials = int(args.trials)
+  sizes = [10000, 100000, 1000000]
 
-  # Parse/read in the while list, we don't want to take this time into account
-  # when benchmarking the function
-  int_list = []
-  with open(args.file) as f:
-    int_list = [int(line.rstrip()) for line in f]
-
-  bst = BST()
-  for i in range(0, len(int_list)):
-    key = int_list[i]
-    val = int_list[i]
-    bst.put(key,val)
-
-  item = int(args.item)
-  sel = bst.select(item)
-  ran = bst.rank(item)
-
-  # Print out the results to out.txt
   with open('./out.txt', 'wb') as f:
-    f.write("Select %s ---> Key: %s, Value: %s \n" % (item, sel, bst.get(sel)))
-    f.write("Rank Key: %s ---> %s \n" % (item, ran))
-    f.write("Get Key: %s ---> Key: %s, Value: %s \n" % (item, item, bst.get(item)))
+    f.write( "size,black_rate,rate_rate\n" )
+    # For each size, run 100 trials
+    # Prints average red/black percentages
+    log ("=================================")
+    for size in sizes:
+      # Keep track of rates
+      brate = list()
+      rrate = list()
+      for trial in range(1, trials+1):
+        # Print trial number
+        log("Size: {0}, Trial: {1}".format(size, trial))
+        # Generate new random List
+        start = time.clock()
+        int_list = [i for i in range(size)]
+        random.shuffle(int_list)
+        log ( 'List Generation Time: {0}'.format( (time.clock() - start) ) )
+        # Build tree
+        start = time.clock()
+        rbt = RBT()
+        for i in range(0, len(int_list)):
+          key = int_list[i]
+          val = int_list[i]
+          rbt.put(key,val)
+        log ( 'RBT Generation Time: {0}'.format( (time.clock() - start) ) )
+        # Get nodes
+        start = time.clock()
+        alinks = rbt.size()
+        rlinks = rbt.get_red_links()
+        blinks = alinks - rlinks
+        log ( 'Red Link Count Time: {0}'.format( (time.clock() - start) ) )
 
-
-
+        # Add rates to lists
+        brate.append(float((float(blinks)/float(alinks))))
+        rrate.append(float((float(rlinks)/float(alinks))))
+        log ("---------------------------------")
+      # Print average values for all trials
+      b_avg_per = sum(brate) / float(len(brate))
+      r_avg_per = sum(rrate) / float(len(rrate))
+      # Print out the results to out.txt
+      final_stat = "{0},{1},{2}\n".format(size, b_avg_per, r_avg_per)
+      log( final_stat )
+      f.write( final_stat )
+      log ("=================================")

@@ -1,6 +1,14 @@
-import sys, timeit, argparse, time
+import sys, timeit, argparse, time, random
 from functools import partial
+from math import sqrt
 
+###############
+# Increasing the recursion limit since we will be doing recursive puts on a tree
+sys.setrecursionlimit(10**6)
+###############
+
+# For logging
+LOG_ENABLED = False
 
 def new_node(key=None, val=None, left=None, right=None, N=0):
   """
@@ -60,12 +68,20 @@ class BST:
       raise Exception("argument to contains() is null")
     return self.get(key) != None
 
+  def path(self, key):
+    """
+    Return the path length to a given key
+    """
+    value, path_lenght = self.__get(self.root, key)
+    return path_lenght
+
   def get(self, key):
     """
     Get the value associated with a given key starting at the given node
     Return 'None' if key does not exist
     """
-    return self.__get(self.root, key)
+    value, path_lenght = self.__get(self.root, key)
+    return value
 
   def __get(self, node, key):
     """
@@ -75,14 +91,22 @@ class BST:
     If key is larger than node, search right subtree
     If key is the same as node, return node value
     """
+    temp = 0
+    path = 0
+    value = None 
     if node == None:
-      return null
+      value = None
     elif key < node['key']:
-      return self.__get(node['left'], key)
+      path += 1
+      value, temp = self.__get(node['left'], key)
     elif key > node['key']:
-      return self.__get(node['right'], key)
+      path += 1
+      value, temp = self.__get(node['right'], key)
     else:
-      return node['val']
+      value = node['val']
+
+    path += temp
+    return value, path
 
   def put(self, key, val):
     """
@@ -343,37 +367,80 @@ class BST:
     else:
       return self.__size(node['left'])
 
+
+# Helper function to calculate the mean and standard deviation
+def mean_std_dev(data):
+  """ Calculate mean and standard deviation of data []: """
+  length, mean, std = len(data), 0, 0
+  for item in data:
+      mean = mean + item
+  mean = mean / float(length)
+  for item in data:
+      std = std + (item - mean) ** 2
+  std = sqrt(std / float(length))
+  mean = int(round(mean))
+  std = int(round(std))
+  return mean, std
+
+# Logging Helper function
+def log(txt):
+  if LOG_ENABLED:
+    print(txt)
+
+
 if __name__ == '__main__':
   
   # Instantiate argument parser
-  parser = argparse.ArgumentParser(description='Binary Search Tree implementation, list is provided via input text file')
-  parser.add_argument('-i', '--item', help='number that will be used to rank and select', default=7)
-  parser.add_argument('file', help='path to the file containing list of integers', default='')
+  parser = argparse.ArgumentParser(description='Red-Black Tree implementation, list is randomly generated')
+  parser.add_argument('-t', '--trials', help='number of trials', default=100)
+  parser.add_argument('-s', '--sorted', help='Preform sorted insertions', action='store_true', default=False)
+  parser.add_argument('-l', '--log', help='Print trial stats', action='store_true', default=False)
+
+  #parser.add_argument('file', help='path to the file containing list of integers', default='')
   
   # Get/parse arguments
   args = parser.parse_args()
+  LOG_ENABLED = args.log
+  trials = int(args.trials)
+  sorted_insertions = args.sorted
+  sizes = [10, 100, 1000, 10000]
 
-  # Parse/read in the while list, we don't want to take this time into account
-  # when benchmarking the function
-  int_list = []
-  with open(args.file) as f:
-    int_list = [int(line.rstrip()) for line in f]
-
-  bst = BST()
-  for i in range(0, len(int_list)):
-    key = int_list[i]
-    val = int_list[i]
-    bst.put(key,val)
-
-  item = int(args.item)
-  sel = bst.select(item)
-  ran = bst.rank(item)
-
-  # Print out the results to out.txt
+  # Start Trials
+  # For each size, run 'args.trials' trials
+  # Writes to ./out.txt the mean and standard deviation of path length per size
   with open('./out.txt', 'wb') as f:
-    f.write("Select %s ---> Key: %s, Value: %s \n" % (item, sel, bst.get(sel)))
-    f.write("Rank Key: %s ---> %s \n" % (item, ran))
-    f.write("Get Key: %s ---> Key: %s, Value: %s \n" % (item, item, bst.get(item)))
-
-
-
+    f.write( "size,sorted,mean,standard_deviation\n" )
+    log ("=================================")
+    for size in sizes: # for each trial size
+      # Keep track path lengths
+      lengths = list()
+      for trial in range(1, trials+1): # for each trial in size
+        # Print trial number
+        log("Size: {0}, Trial: {1}".format(size, trial))
+        # Generate new random List
+        start = time.clock()
+        int_list = [i for i in range(size)]
+        if not sorted_insertions: # if not doing sorted insertions, shuffle the array
+          random.shuffle(int_list)
+        log ( 'List Generation Time: {0}'.format( (time.clock() - start) ) )
+        # Build Red-Black Tree
+        start = time.clock()
+        bst = BST()
+        for item in int_list:
+          bst.put(item,item)
+        log ( 'BST Generation Time: {0}'.format( (time.clock() - start) ) )
+        # Get Path length to random element
+        element = random.randrange(1, size+1) # get a random element key
+        path_length = bst.path(element) # calculate path length
+        log ( "Random Element: {0}, Path Length: {1}".format(element,path_length))
+        log ( 'Path Length Calculation Time: {0}'.format( (time.clock() - start) ) )
+        # Add path length to list of path lengths
+        lengths.append(path_length)
+        log ("---------------------------------")
+      # Print mean and standard deviation for all trials in the current size
+      mean, std = mean_std_dev(lengths)
+      # Print out the results to out.txt
+      final_stat = "{0},{1},{2},{3}\n".format(size, sorted_insertions, mean, std)
+      log( final_stat )
+      f.write( final_stat )
+      log ("=================================")

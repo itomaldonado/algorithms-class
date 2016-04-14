@@ -1,0 +1,5 @@
+size,sorted,mean,standard_deviation
+10,True,6,3
+100,True,50,31
+1000,True,526,301
+10000,True,4932,2889
